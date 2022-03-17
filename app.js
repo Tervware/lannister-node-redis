@@ -7,6 +7,9 @@ const app = express();
 app.use(Cors());
 app.use(express.json());
 
+app.use("/", (req, res)=> {
+ return res.status(200).send({ status: "ok" });
+});
 
 app.post("/fees", (req, res)=> {
    addFees(req.body.FeeConfigurationSpec);
