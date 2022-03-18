@@ -7,7 +7,7 @@ const app = express();
 app.use(Cors());
 app.use(express.json());
 
-app.use("/", (req, res)=> {
+app.get("/", (req, res)=> {
  return res.status(200).send({ status: "ok" });
 });
 
