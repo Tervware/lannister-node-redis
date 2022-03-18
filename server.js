@@ -1,8 +1,8 @@
 require("dotenv").config();
 const app = require("./app");
 
-app.listen(process.env.APP_PORT, () => {
+app.listen(process.env.PORT, () => {
   console.log(
-    `Environment: ${process.env.NODE_ENV} on port  ${process.env.APP_PORT} `
+    `Environment: ${process.env.NODE_ENV} on port  ${process.env.PORT} `
   );
 });
