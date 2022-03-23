@@ -1,18 +1,16 @@
 const Redis = require("ioredis");
-
-const redisClient = new Redis();
-const pipeline = redisClient.pipeline();
+const connection = new Redis();
 
 const INDEX = "fee:index";
 
 exports.addIndex = async () => {
-  let indices = await redisClient.call("FT._LIST");
+  let indices = await connection.call("FT._LIST");
 
   if (indices.includes(INDEX)) {
-    await redisClient.call("FT.DROPINDEX", INDEX);
+    await connection.call("FT.DROPINDEX", INDEX);
   }
 
-  await redisClient.call(
+  await connection.call(
     "FT.CREATE",
     INDEX,
     "ON",
@@ -78,10 +76,11 @@ exports.addFees = async (FeeConfigurationSpec) => {
 
   await this.validateSpec(FeeConfigurationSpec);
 
-  const indices = await redisClient.call("FT._LIST");
+  const indices = await connection.call("FT._LIST");
   if (!indices.includes(INDEX)) {
     await this.addIndex();
   }
+  const pipeline = connection.pipeline();
 
   FeeConfigurationSpec.split("\n").forEach(async (data) => {
     const dataObj = data.split(" ");
@@ -141,7 +140,7 @@ exports.getConfigs = async (payload) => {
   // TODO: Query individual fields from redis
   const query = `*`;
   // return query
-  let [count, ...data] = await redisClient.call(
+  let [count, ...data] = await connection.call(
     "FT.SEARCH",
     INDEX,
     query
