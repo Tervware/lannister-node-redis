@@ -1,44 +1,26 @@
-require("dotenv").config(); 
+require("dotenv").config();
 const express = require("express");
-const Cors = require("cors");  
-const {addFees, computeTransaction} = require("./services");
+const Cors = require("cors");
+const routes = require("./routes");
 
 const app = express();
 app.use(Cors());
 app.use(express.json());
 
-app.get("/", (req, res)=> {
- return res.status(200).send({ status: "ok" });
-});
-
-app.post("/fees", (req, res)=> {
-   addFees(req.body.FeeConfigurationSpec);
-  return res.status(200).send({ status: "ok" });
-});
-
-app.post("/compute-transaction-fee", (req, res)=> {
-  const data = computeTransaction(req.body);
-  return res.status(200).send(data);
-});
-
+app.use("/", routes);
 
 // Handles all errors
 app.use((err, req, res, next) => {
   try {
-   
-    return res
-      .status(400)
-      .send({ status: "error", message: err.message });
+    return res.status(400).send({ Error: err.message });
   } catch (error) {
-    return res
-      .status(500)
-      .send({ status: "error", message: "Error"});
+    return res.status(500).send({ Error: "Error" });
   }
 });
 
 // Not found route
 app.use((req, res) => {
-  return res.status(404).send({ status: "error", message: "Route not found" });
+  return res.status(404).send({ Error: "Route not found." });
 });
 
 module.exports = app;
