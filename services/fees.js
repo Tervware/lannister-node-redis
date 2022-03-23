@@ -169,7 +169,7 @@ exports.getHighestSpecifity = async (feeConfigs, payload) => {
   const { CurrencyCountry, Currency, PaymentEntity } = payload;
   const locale  = CurrencyCountry === PaymentEntity.Country ? "LOCL" : "INTL";
   const typeProperties = [PaymentEntity.ID, PaymentEntity.Issuer, PaymentEntity.Brand, PaymentEntity.SixID, PaymentEntity.Number];
-  console.log({Currency, locale, locale, locale, locale, type: PaymentEntity.Type});
+
   const configs = feeConfigs.filter(
     (conf) =>
       (conf.fee_currency === Currency || conf.fee_currency === "*") &&
@@ -178,7 +178,7 @@ exports.getHighestSpecifity = async (feeConfigs, payload) => {
       (typeProperties.includes(conf.fee_entity_property)||
       conf.fee_entity_property === "*")
   );
-console.log({ configs });
+
   if (configs.length === 0) {
     throw new Error("No fee configuration for USD transactions.");
   }
