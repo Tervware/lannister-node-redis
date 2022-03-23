@@ -5,61 +5,6 @@ const pipeline = redisClient.pipeline();
 
 const INDEX = "fee:index";
 
-feeConfigs =[
-  {
-    fee_id: 'LNPY1221',
-    fee_currency: 'NGN',
-    fee_locale: 'INTL',
-    fee_entity: 'false',
-    fee_entity_property: 'VISA',
-    fee_apply: 'APPLY',
-    fee_type: 'PERC',
-    fee_value: '5.0',
-    card_last4: '',
-    card_first6: '',
-    wildcards_no: '0'
-  },
-  {
-    fee_id: 'LNPY1223',
-    fee_currency: 'NGN',
-    fee_locale: 'LOCL',
-    fee_entity: 'false',
-    fee_entity_property: '*',
-    fee_apply: 'APPLY',
-    fee_type: 'FLAT_PERC',
-    fee_value: '50:1.4',
-    card_last4: '',
-    card_first6: '',
-    wildcards_no: '1'
-  },
-  {
-    fee_id: 'LNPY1224',
-    fee_currency: 'NGN',
-    fee_locale: '*',
-    fee_entity: 'false',
-    fee_entity_property: '*',
-    fee_apply: 'APPLY',
-    fee_type: 'FLAT',
-    fee_value: '100',
-    card_last4: '',
-    card_first6: '',
-    wildcards_no: '2'
-  },
-  {
-    fee_id: 'LNPY1225',
-    fee_currency: 'NGN',
-    fee_locale: '*',
-    fee_entity: 'false',
-    fee_entity_property: 'MTN',
-    fee_apply: 'APPLY',
-    fee_type: 'PERC',
-    fee_value: '0.55',
-    card_last4: '',
-    card_first6: '',
-    wildcards_no: '1'
-  }
-];
-
 exports.addIndex = async () => {
   let indices = await redisClient.call("FT._LIST");
 
@@ -89,22 +34,21 @@ exports.addIndex = async () => {
 
 exports.validateSpec = async (FeeConfigurationSpec) => {
 
-  FeeConfigurationSpec.split("\n").forEach(async (data) => {
-    const config = data.split(" ");
-    if (config.length !== 8) {
+  for(data of FeeConfigurationSpec.split("\n")) {
+    const dataObj = data.split(" ");
+    if (dataObj.length !== 8) {
       throw new Error("Fee configuration specification is invalid.")
     }
-    console.log({ count: dataObj.length, dataObj }); 
-    
+  
     const fee_id = dataObj[0];
     if (fee_id.length !== 8) {
-      throw new Error("Fee Id must contain 8 characters.")
+      throw new Error(`Invalid Fee Id ${fee_id}. Fee Id must contain 8 characters.`)
     }
     const fee_currency = dataObj[1];
     if (fee_currency !== "NGN") {
       throw new Error("NGN is the only accepted currency at the moment.")
     }
-
+    
     const fee_locale = dataObj[2];
     if (!(["*", "INTL", "LOCL"].includes(fee_locale))) {
       throw new Error("Fee locale value must be either *, INTL or LOCL.")
@@ -112,20 +56,20 @@ exports.validateSpec = async (FeeConfigurationSpec) => {
 
     const entity = dataObj[3].split("(");
     const fee_entity = entity[0];
-    if (!(["*", "CREDIT-CARD", "DEBIT-CARD","BANK-ACCOUNT", "USSD", "WALLET-ID"].includes(entity))) {
+    if (!(["*", "CREDIT-CARD", "DEBIT-CARD","BANK-ACCOUNT", "USSD", "WALLET-ID"].includes(fee_entity))) {
       throw new Error("Fee entity value must be either *, CREDIT-CARD, DEBIT-CARD, BANK-ACCOUNT, USSD or WALLET-ID.")
     }
-    const fee_entity_property = entity[1].slice(0, -1);
-    if (!(["*", "CREDIT-CARD", "DEBIT-CARD","BANK-ACCOUNT", "USSD", "WALLET-ID"].includes(entity))) {
-      throw new Error("Fee entity value must be either *, CREDIT-CARD, DEBIT-CARD, BANK-ACCOUNT, USSD or WALLET-ID.")
-    }
-    
+
     const fee_type = dataObj[6];
-    if (!(["FLAT", "PERC", "FLAT_PERC"].includes(entity))) {
-      throw new Error("Fee type value must be either FLAT, PERC, or FLAT_PERC.")
+    if (!(["FLAT", "PERC", "FLAT_PERC"].includes(fee_type))) {
+      throw new Error("Fee type must be either FLAT, PERC, or FLAT_PERC.")
+    }
+    const fee_value = dataObj[7];
+    if (["FLAT", "PERC"].includes(fee_type) && Number(fee_value) < 0) {
+      throw new Error("Fee value must be a non-negative numeric.")
     }
     
-  });
+  };
 
 };
 
@@ -133,7 +77,7 @@ exports.validateSpec = async (FeeConfigurationSpec) => {
 exports.addFees = async (FeeConfigurationSpec) => {
 
   await this.validateSpec(FeeConfigurationSpec);
-  
+
   const indices = await redisClient.call("FT._LIST");
   if (!indices.includes(INDEX)) {
     await this.addIndex();
@@ -141,7 +85,7 @@ exports.addFees = async (FeeConfigurationSpec) => {
 
   FeeConfigurationSpec.split("\n").forEach(async (data) => {
     const dataObj = data.split(" ");
-    console.log({ count: dataObj.length, dataObj }); 
+
     const fee_currency = dataObj[1];
     const fee_locale = dataObj[2];
     const entity = dataObj[3].split("(");
