@@ -124,7 +124,10 @@ exports.computeTransaction = async (payload) => {
 
   const configs = await this.getConfigs(payload);
   if (configs.length === 0) {
-    throw new Error("No fee configuration for USD transactions.");
+    throw new Error(`No fee configuration for this transaction.`);
+  }
+  if (payload.length === 0) {
+    throw new Error(`No fee configuration for this transaction.`);
   }
   
   const highestSpecifityConfig = await this.getHighestSpecifity(configs,payload);
